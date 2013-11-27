@@ -6,18 +6,36 @@ require_once('lib/BackupClass.php');
 //Database Configurations Array
 $dbConfig = array('host' => 'localhost',
 				  'login' => '{DBUsername}',
-				  'password' => 'DBPassword',
-				  'database_name' => 'DBName');
+				  'password' => '{DBPassword}',
+				  'database_name' => '{DBName}');
 
 //Amazon S3 Configurations Array (Optional)
 $amazonConfig = array('accessKey' => '{YOUR S3 ACCESS KEY}',
 				 	  'secretKey' =>  '{Your S3 Secret Key}',
 				  	  'bucketName' => '{Your Bucket}');
 					  
+/*
+ * Example 1: One seperate dump file per table
+ */
+					  
 try{
 	$dbBackupObj = new DbBackup($dbConfig);
-	$dbBackupObj->setBackupDirectory('backups/yourFolderName');
-	$dbBackupObj->enableS3Support($amazonConfig);
+	$dbBackupObj->setBackupDirectory('backups/table_files');
+	//$dbBackupObj->enableS3Support($amazonConfig);
+	$dbBackupObj->executeBackup();
+}catch(Exception $e){
+	echo $e->getMessage();
+}
+
+
+/*
+ * Example 2: One Single file for the whole DB
+ */
+ try{
+	$dbBackupObj = new DbBackup($dbConfig);
+	$dbBackupObj->setBackupDirectory('backups/database_files');
+	$dbBackupObj->setDumpType(0); //To disable the single table files dumping
+	//$dbBackupObj->enableS3Support($amazonConfig);
 	$dbBackupObj->executeBackup();
 }catch(Exception $e){
 	echo $e->getMessage();
