@@ -15,7 +15,7 @@ class DbBackup {
 	* @access private
 	* @see setBackupDirectory()
 	*/
-	private $backup_directory = NULL;
+	private $backupDir = NULL;
 	
 	/** 
 	* Allows the choice between dumping the whole file as one SQL script or as a seperate script for each table
@@ -23,16 +23,16 @@ class DbBackup {
 	* @access private
 	* @see setDumpType()
 	*/
-	private $dump_table_files = true;
+	private $dumpTableFiles = true;
 	
 	
 	/** 
 	* All database configuration in one array
 	* @var Array
 	* @access private
-	* @see setDumpType()
+	* @see __construct()
 	*/
-	private $database_vars = NULL;
+	private $databaseVars = NULL;
 	
 	
 	/** 
@@ -87,14 +87,14 @@ class DbBackup {
 		//Just to make sure the user provided all Database Connection fields
 		if(!isset($dbConfigVars['host']) || !isset($dbConfigVars['login'])  || !isset($dbConfigVars['password'])  || !isset($dbConfigVars['database_name'])){
 			throw new Exception("<h3>Missing one or more Database configuration Array keys<h3>
-			<br>Please validate you array has the following keys: <br>
+			<br>Please validate your array has the following keys: <br>
 				1- host<br>
 				2- login<br>
 				3- password<br>
 				4- database_name<br>");
 		}
 		
-		$this->database_vars = $dbConfigVars;
+		$this->databaseVars = $dbConfigVars;
 		$this->s3Config = $S3ConfigVars;
 		$this->createNewDbConnection();
 	}
@@ -109,7 +109,11 @@ class DbBackup {
 	*/
 	
 	private function createNewDbConnection(){
-		$this->dbObject = new mysqli($this->database_vars['host'],$this->database_vars['login'],$this->database_vars['password'],$this->database_vars['database_name']);
+		$this->dbObject = @new mysqli($this->databaseVars['host'],$this->databaseVars['login'],$this->databaseVars['password'],$this->databaseVars['database_name']);
+		
+		if (mysqli_connect_error()) {
+			throw new Exception('Database Connection Error (' . mysqli_connect_errno() . ') '. mysqli_connect_error());
+		}
 	}
 	
 	/** 
@@ -169,22 +173,27 @@ class DbBackup {
 		//Prepare a new Empty directory to hold up the backup files
 		$this->createNewBackupDirectory();
 		
-		//Execute a list all tables query to select all DB Table names
-		$dbTablesList = $this->listDbTables();
-		
-		while($row = $dbTablesList->fetch_assoc()){ //loop on eatch table of the query result
-			//extract the table name from the curren row
-			$table_name = $row["Tables_in_".$this->database_vars['database_name']];
+		if($this->dumpTableFiles){
+			//Execute a list all tables query to select all DB Table names
+			$dbTablesList = $this->listDbTables();
 			
-			
-			if(!in_array($table_name,$this->excludeTables)){//validate the table name is not within the excluded tables, if excluded nothing will happen and we will shift to the next table in the list 
+			while($row = $dbTablesList->fetch_assoc()){ //loop on eatch table of the query result
+				//extract the table name from the curren row
+				$table_name = $row["Tables_in_".$this->databaseVars['database_name']];
 				
-				//create the file name (Prefixed with db_backup and suffixed with date and time)
-				$file_name = "db_backup_".$table_name."_".date('Y_m_d_H_i').".sql";
 				
-				//Execute the dump command
-				system("mysqldump --opt --user=".$this->database_vars['login']." --password=".$this->database_vars['password']." ".$this->database_vars['database_name']." ".$table_name." > ".$this->folderName.'/'.$file_name);
+				if(!in_array($table_name,$this->excludeTables)){//validate the table name is not within the excluded tables, if excluded nothing will happen and we will shift to the next table in the list 
+					
+					//create the file name (Prefixed with db_backup and suffixed with date and time)
+					$file_name = "db_backup_".$table_name."_".date('Y_m_d_H_i').".sql";
+					
+					//Execute the dump command
+					system("mysqldump --opt --user='".$this->databaseVars['login']."' --password='".$this->databaseVars['password']."' ".$this->databaseVars['database_name']." ".$table_name." > ".$this->folderName.'/'.$file_name);
+				}
 			}
+		}else{
+			$file_name = "db_backup_ALL_".date('Y_m_d_H_i').".sql";
+			system("mysqldump --opt --user='".$this->databaseVars['login']."' --password='".$this->databaseVars['password']."' ".$this->databaseVars['database_name']." > ".$this->folderName.'/'.$file_name);
 		}
 		$this->finalizeBackup();
 	}
@@ -234,7 +243,7 @@ class DbBackup {
 				throw new Exception("Specified Backup directory doesn't exist");
 			}
 		}
-		$this->backup_directory = $directory_path;
+		$this->backupDir = $directory_path;
 		return true;
 	}
 	
@@ -300,13 +309,33 @@ class DbBackup {
 	*
 	*/
 	private function createNewBackupDirectory(){
-		$folder_name = $this->database_vars['database_name']."_backup_".time();
-		mkdir($this->backup_directory."/".$folder_name);
-		$this->folderName = $this->backup_directory."/".$folder_name;
+		$folder_name = $this->databaseVars['database_name']."_backup_".time();
+		mkdir($this->backupDir."/".$folder_name);
+		$this->folderName = $this->backupDir."/".$folder_name;
+	}
+	
+	/** 
+	* Sets the type of dump that will result from the execution process
+	*
+	* @param int $type 1=Single file for each table, 0=One file for the whole database 
+	* @return void
+	* @access private
+	*
+	*/
+	public function setDumpType($type){
+		switch($type){
+			case 1:
+				$dumpTableFiles = true;
+			break;
+			case 0:
+				$dumpTableFiles = false;
+			break;
+			default:
+				$dumpTableFiles = true;
+		}
 	}
 	
 	
-
 	/** 
 	* Transfers the Compressed Backup file to Amazon S3
 	*
