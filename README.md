@@ -1,27 +1,30 @@
-MySQL-Backup-Class
+MySQL Backup Class
 ==================
-
-# About the Project
-
 This project provides a useful tool (PHP Class) to backup any MySQL database automaticall with Amazon S3 Support.
 
 # Features
-1- Backup each DB table in a seperate SQL Dump File
-2- Exclude specific tables from your Backup
-3- Backup data on Amazon S3(Optional)
+	* Backup each DB table in a seperate SQL Dump File
+	* Exclude specific tables from your Backup
+	* Backup data on Amazon S3(Optional)
 
 # Currently Working On:
 
-1- Add a Code Generation File
-2- Validate user submitted data
-3- Restore Database Class
+	* Add a Code Generation File
+	* Validate user provided settings
+	* Modify the Class to allow data restoring on the fly too
 
 # Code Examples
 
-{Will be added later}
+```
+<?php
+require_once('lib/BackupClass.php');
+$dbConfig = array('host' => 'localhost',
+				  'login' => '{DBUsername}',
+				  'password' => 'DBPassword',
+				  'database_name' => 'DBName');
 
-# Requirements
-
-* The server should have 'mysqldump' command added to the bash commands
-* The PHP installation should be allowed to run ["system()" Function](http://www.php.net/system)
-
+$dbBackupObj = new DbBackup($dbConfig);
+$dbBackupObj->setBackupDirectory('backups/yourFolderName');
+$dbBackupObj->executeBackup();
+?>
+```
