@@ -21,7 +21,7 @@ $amazonConfig = array('accessKey' => '{YOUR S3 ACCESS KEY}',
 try{
 	$dbBackupObj = new DbBackup($dbConfig);
 	$dbBackupObj->setBackupDirectory('backups/table_files');
-	//$dbBackupObj->enableS3Support($amazonConfig);
+	$dbBackupObj->enableS3Support($amazonConfig);//this is option, you can remove it if you want local file system backup only
 	$dbBackupObj->executeBackup();
 }catch(Exception $e){
 	echo $e->getMessage();
@@ -35,7 +35,7 @@ try{
 	$dbBackupObj = new DbBackup($dbConfig);
 	$dbBackupObj->setBackupDirectory('backups/database_files');
 	$dbBackupObj->setDumpType(0); //To disable the single table files dumping
-	//$dbBackupObj->enableS3Support($amazonConfig);
+	$dbBackupObj->enableS3Support($amazonConfig);//this is option, you can remove it if you want local file system backup only
 	$dbBackupObj->executeBackup();
 }catch(Exception $e){
 	echo $e->getMessage();
