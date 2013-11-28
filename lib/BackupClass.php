@@ -353,7 +353,7 @@ class DbBackup {
 	
 	
 	/** 
-	* Add one or more tables to be excluded from the log
+	* Add one or more tables to be excluded from the backup process
 	*
 	* @param string $tableName One or more table names to exclude
 	* @return void
