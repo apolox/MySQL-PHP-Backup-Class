@@ -21,6 +21,9 @@ $amazonConfig = array('accessKey' => '{YOUR S3 ACCESS KEY}',
 try{
 	$dbBackupObj = new DbBackup($dbConfig);
 	$dbBackupObj->setBackupDirectory('backups/table_files');
+	
+	$dbBackupObj->excludeTable('test','logs','users');
+	
 	$dbBackupObj->enableS3Support($amazonConfig);//this is option, you can remove it if you want local file system backup only
 	$dbBackupObj->executeBackup();
 }catch(Exception $e){
