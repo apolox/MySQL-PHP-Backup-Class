@@ -66,13 +66,7 @@ class DbBackup {
 	* @see enableS3Support();executeBackup();
 	*/
 	private $transferToS3 = false;
-	
-	
-	/** 
-	* ===========================================================
-	* ===================  CLASS METHODS  =======================
-	* ===========================================================
-	*/
+
 	
 	/**
 	* Constructor of the class
@@ -355,5 +349,24 @@ class DbBackup {
 		} else {
 			throw new Exception("S3::putObjectFile(): Failed to copy file");
 		}
+	}
+	
+	
+	/** 
+	* Add one or more tables to be excluded from the log
+	*
+	* @param string $tableName One or more table names to exclude
+	* @return void
+	* @access public
+	*
+	*/
+	public function excludeTable(){
+		$num_args = func_num_args();
+	    if ($num_args >= 1) {
+	        $args = func_get_args();
+			$this->excludeTables[] = $args;
+	    }else{
+	    	throw new Exception("You need to provide at least one table name to be excluded.");
+	    }
 	}
 }
