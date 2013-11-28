@@ -11,7 +11,7 @@ This project provides a useful tool (PHP Class) to backup any MySQL database aut
 
 	- Add a Code Generation File
 	- Validate user provided settings
-	- Modify the Class to allow data restoring on the fly too
+	- Create a class for the restoring process
 
 # Code Examples
 
