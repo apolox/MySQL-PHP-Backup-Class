@@ -193,7 +193,6 @@ class DbBackup {
 					
 					//Execute the dump command
 					system("mysqldump ".$this->dumpOptions." --user='".$this->databaseVars['login']."' --password='".$this->databaseVars['password']."' ".$this->databaseVars['database_name']." ".$table_name." > ".$this->folderName.'/'.$file_name);
-					echo "mysqldump ".$this->dumpOptions." --user='".$this->databaseVars['login']."' --password='".$this->databaseVars['password']."' ".$this->databaseVars['database_name']." ".$table_name." > ".$this->folderName.'/'.$file_name;
 				}
 			}
 		}else{
