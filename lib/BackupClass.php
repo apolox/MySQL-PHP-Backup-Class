@@ -1,6 +1,6 @@
 <?php
 /** 
-* Backup a MySQL database running on a linux server Automatically
+* MySQL database backup class
 *
 * @author Ayman Bedair <ayman@aymanrb.com>
 * @version 1.0
