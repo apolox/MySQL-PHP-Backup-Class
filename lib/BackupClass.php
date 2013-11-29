@@ -60,12 +60,22 @@ class DbBackup {
 	private $excludeTables = array();
 	
 	/** 
-	* A boolean used to tell the class whethere you want to take the extra mile of saving your backup to amazon S3 Servers
+	* A boolean set to true if you want to take the extra mile of saving your backup to amazon S3 Servers
 	* @var boolean
 	* @access private
-	* @see enableS3Support();executeBackup();
+	* @see enableS3Support(); executeBackup();
 	*/
 	private $transferToS3 = false;
+	
+	
+	/** 
+	* A string of all dump option we'll be using in the process.
+	* @var string
+	* @access private
+	* @see addDumpOption();executeBackup();
+	*/
+	private $dumpOptions = "--opt --skip-comments";
+	
 
 	
 	/**
@@ -182,12 +192,13 @@ class DbBackup {
 					$file_name = "db_backup_".$table_name."_".date('Y_m_d_H_i').".sql";
 					
 					//Execute the dump command
-					system("mysqldump --opt --user='".$this->databaseVars['login']."' --password='".$this->databaseVars['password']."' ".$this->databaseVars['database_name']." ".$table_name." > ".$this->folderName.'/'.$file_name);
+					system("mysqldump ".$this->dumpOptions." --user='".$this->databaseVars['login']."' --password='".$this->databaseVars['password']."' ".$this->databaseVars['database_name']." ".$table_name." > ".$this->folderName.'/'.$file_name);
+					echo "mysqldump ".$this->dumpOptions." --user='".$this->databaseVars['login']."' --password='".$this->databaseVars['password']."' ".$this->databaseVars['database_name']." ".$table_name." > ".$this->folderName.'/'.$file_name;
 				}
 			}
 		}else{
 			$file_name = "db_backup_ALL_".date('Y_m_d_H_i').".sql";
-			system("mysqldump --opt --user='".$this->databaseVars['login']."' --password='".$this->databaseVars['password']."' ".$this->databaseVars['database_name']." > ".$this->folderName.'/'.$file_name);
+			system("mysqldump ".$this->dumpOptions." --user='".$this->databaseVars['login']."' --password='".$this->databaseVars['password']."' ".$this->databaseVars['database_name']." > ".$this->folderName.'/'.$file_name);
 		}
 		$this->finalizeBackup();
 	}
@@ -362,9 +373,47 @@ class DbBackup {
 	*/
 	public function excludeTable(){
 		$num_args = func_num_args();
+		
 	    if ($num_args >= 1) {
 	        $args = func_get_args();
+			
 			$this->excludeTables[] = $args;
+	    }else{
+	    	throw new Exception("You need to provide at least one table name to be excluded.");
+	    }
+	}
+	
+	
+	/** 
+	* Add one or more dump option to the default options
+	*
+	* @param string $dumpOption One or more dump options used in execution
+	* @return void
+	* @access public
+	*
+	*/
+	public function addDumpOption(){
+		//Get the number of supplied arguments / parameters to this method
+		$num_args = func_num_args();
+		
+	    if ($num_args >= 1) {//Make sure at least one argument / parameter was provided
+	    
+	        //Fetch all provided parametes into an array
+	        $args = func_get_args();
+			
+			foreach($args as $arg){
+				$arg = trim($arg); //Just to keep the submitted option clear of side whitespaces
+				
+				if(strpos($this->dumpOptions, $arg) === false){ //make sure it was not already in the dumpOptions var
+						
+					if(strpos($arg, "--") === false){ //add proceeding dashes if the user missed 'em
+						$arg = "--".$arg;
+					}
+					
+					//Append it to the dumpOptions var
+					$this->dumpOptions .= " ".$arg;
+				}				
+			}
 	    }else{
 	    	throw new Exception("You need to provide at least one table name to be excluded.");
 	    }
