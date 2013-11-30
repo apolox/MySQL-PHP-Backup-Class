@@ -101,6 +101,7 @@ class DbBackup {
 		$this->databaseVars = $dbConfigVars;
 		$this->s3Config = $S3ConfigVars;
 		$this->createNewDbConnection();
+		$this->setBackupDirectory('backups/' . $dbConfigVars['database_name']);
 	}
 	
 	/** 
