@@ -20,7 +20,7 @@ This project provides a useful tool (PHP Class) to backup any MySQL database aut
 Code Examples
 =============
 
-#### Basic Usage
+#### Basic Backup Usage
 ```
 <?php
 	require_once('lib/BackupClass.php');
@@ -30,7 +30,6 @@ Code Examples
 					  'database_name' => '{DBName}');
 	
 	$dbBackupObj = new DbBackup($dbConfig);
-	$dbBackupObj->setBackupDirectory('backups/yourFolderName');
 	$dbBackupObj->executeBackup();
 ?>
 ```
