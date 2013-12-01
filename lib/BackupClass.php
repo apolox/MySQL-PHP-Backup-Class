@@ -254,12 +254,11 @@ class DbBackup {
 		if(!empty($backupFile)){
 			$this->createNewClassDirectory("restore");
 			system("tar xf " . $backupFile . " -C ".$this->folderName);
-			echo "<br>".$this->folderName;
+
 			$dumpedFiles = glob($this->folderName . '/*_backup_*');
 			
 			//Restore all files available in the current folder
 			foreach($dumpedFiles as $sqlFile){
-				echo "---".$sqlFile."<br>";
 				system("mysql --user='".$this->databaseVars['login']."' --password='".$this->databaseVars['password']."' ".$this->databaseVars['database_name']." < ".$sqlFile);		
 			}
 		}else{
