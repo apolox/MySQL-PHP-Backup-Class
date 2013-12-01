@@ -2,12 +2,12 @@
 /** 
 * MySQL database backup class
 *
-* @author Ayman Bedair <ayman@aymanrb.com>
-* @version 1.0
+* @author Ayman R. Bedair <http://www.AymanRB.com>
+* @version 0.1.1-beta
 * @access public
-* @copyright http://www.AymanRB.com
 *
 */
+
 class DbBackup {
 	/** 
 	* Full absolute path to database backup directory on the server without prevailing slashes
@@ -69,14 +69,12 @@ class DbBackup {
 	
 	
 	/** 
-	* A string of all dump option we'll be using in the process.
+	* A string of all dump options we'll be using in the process.
 	* @var string
 	* @access private
 	* @see addDumpOption();executeBackup();
 	*/
 	private $dumpOptions = "--opt --skip-comments";
-	
-
 	
 	/**
 	* Constructor of the class
@@ -176,16 +174,14 @@ class DbBackup {
 	*/
 	public function executeBackup(){
 		//Prepare a new Empty directory to hold up the backup files
-		$this->createNewBackupDirectory();
+		$this->createNewClassDirectory("backup");
 		
 		if($this->dumpTableFiles){
 			//Execute a list all tables query to select all DB Table names
 			$dbTablesList = $this->listDbTables();
-			
-			while($row = $dbTablesList->fetch_assoc()){ //loop on eatch table of the query result
-				//extract the table name from the curren row
+			while($row = $dbTablesList->fetch_assoc()){ //loop on each table of the query result
+				//extract the table name from the current row
 				$table_name = $row["Tables_in_".$this->databaseVars['database_name']];
-				
 				
 				if(!in_array($table_name,$this->excludeTables)){//validate the table name is not within the excluded tables, if excluded nothing will happen and we will shift to the next table in the list 
 					
@@ -212,20 +208,65 @@ class DbBackup {
 	*
 	*/
 	private function finalizeBackup(){
-		//Compress files in the dump folder
-		system("tar -zcvf ".$this->folderName.".tar.gz ".$this->folderName);
+		$currentWD = getcwd();
 		
-		//Delete nested files and directories
-		$this->recursiveDirRemove($this->folderName);
+		//Change the PHP working Directory. (To solve the issues with having nested dirs added to the archieve)
+		chdir($currentWD . "/" . $this->folderName); 
+		
+		//Compress all the files in the dump folder
+		system("tar zcf ".$currentWD . "/" . $this->folderName.".tar.gz *");
+		
+		//Delete nested files and directories (Leave the compressed file only)
+		$this->recursiveDirRemove($currentWD . "/" . $this->folderName);
+		
+		//return back to original directory (To keep the process reusable for other dirs and databases)
+		chdir($currentWD);
 		
 		//Close DB Connection
 		$this->dbObject->close();
 		
-		//transfer the compressed file to Amazon S3 storage
+		//Transfer the compressed file to Amazon S3 storage (If asked to)
 		if($this->transferToS3){
 			$this->transferToAmazon();
 		}
 	}
+	
+	
+	/** 
+	* Executes the backup restore process from dumped files
+	*
+	* @return void
+	* @access public
+	*
+	*/
+	public function executeRestore(){
+		//Fetch all local backup files available		
+		$dumpedArchives = glob($this->backupDir . '/' . $this->databaseVars['database_name'] . "_backup_*");
+		if(!empty($dumpedArchives)){
+			//Get the Lastest backup from all archieves found
+			$backupFile = end($dumpedArchives);
+		}else{
+			//Will try to fetch the data from amazon S3 Storage here			
+			$backupFile = "";
+		}
+		
+		//Extract/Uncompress the backup file
+		if(!empty($backupFile)){
+			$this->createNewClassDirectory("restore");
+			system("tar xf " . $backupFile . " -C ".$this->folderName);
+			echo "<br>".$this->folderName;
+			$dumpedFiles = glob($this->folderName . '/*_backup_*');
+			
+			//Restore all files available in the current folder
+			foreach($dumpedFiles as $sqlFile){
+				echo "---".$sqlFile."<br>";
+				system("mysql --user='".$this->databaseVars['login']."' --password='".$this->databaseVars['password']."' ".$this->databaseVars['database_name']." < ".$sqlFile);		
+			}
+		}else{
+			throw new Exception("Backup Class couldn't find any backup files to restore from. Restore Porcess Failed.");
+		}
+	}
+	
 	
 	
 	
@@ -307,14 +348,14 @@ class DbBackup {
 		}
 	}
 	/** 
-	* Generates a New Folder for the current Backup Execution Session
+	* Generates a New Folder for the current Backup / Restor Execution Session
 	*
 	* @return void
 	* @access private
 	*
 	*/
-	private function createNewBackupDirectory(){
-		$folder_name = $this->databaseVars['database_name']."_backup_".time();
+	private function createNewClassDirectory($classSubject = "backup"){
+		$folder_name = $this->databaseVars['database_name']."_".$classSubject."_".date('Y-m-d_H-i-s');
 		mkdir($this->backupDir."/".$folder_name);
 		$this->folderName = $this->backupDir."/".$folder_name;
 	}
@@ -349,14 +390,15 @@ class DbBackup {
 	*
 	*/
 	private function transferToAmazon(){
-		$uploadFile = $this->folderName.".tar.gz";
 		require_once('S3.php');
+		
 		//Create a new Instance of the S3 Object
 		$s3 = new S3($this->s3Config['accessKey'], $this->s3Config['secretKey'], false);
-			
+		
+		$uploadedFile = $this->folderName.".tar.gz";	
 		// Put our file with Private access
-		if ($s3->putObjectFile($uploadFile, $this->s3Config['bucketName'], $uploadFile, S3::ACL_PRIVATE)) {
-			throw new Exception("S3::putObjectFile(): File copied to {".$this->s3Config['bucketName']."}".$uploadFile);
+		if ($s3->putObjectFile($uploadedFile, $this->s3Config['bucketName'], basename($uploadedFile), S3::ACL_PRIVATE)) {
+			throw new Exception("S3::putObjectFile(): File copied to {".$this->s3Config['bucketName']."}".basename($uploadedFile));
 		} else {
 			throw new Exception("S3::putObjectFile(): Failed to copy file");
 		}
@@ -377,7 +419,7 @@ class DbBackup {
 	    if ($num_args >= 1) {
 	        $args = func_get_args();
 			
-			$this->excludeTables[] = $args;
+			$this->excludeTables = array_merge($this->excludeTables,$args);
 	    }else{
 	    	throw new Exception("You need to provide at least one table name to be excluded.");
 	    }
@@ -409,13 +451,12 @@ class DbBackup {
 					if(strpos($arg, "--") === false){ //add proceeding dashes if the user missed 'em
 						$arg = "--".$arg;
 					}
-					
 					//Append it to the dumpOptions var
 					$this->dumpOptions .= " ".$arg;
 				}				
 			}
 	    }else{
-	    	throw new Exception("You need to provide at least one table name to be excluded.");
+	    	throw new Exception("You need to provide at least one dump option to be added.");
 	    }
 	}
 }
