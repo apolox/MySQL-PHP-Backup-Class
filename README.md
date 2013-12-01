@@ -6,16 +6,16 @@ This project provides a useful tool (PHP Class) to backup any MySQL database aut
 	- Backup the whole database (All Tables) in one single file
 	- Backup each DB table in a seperate SQL Dump File
 	- Exclude specific tables from your Backup
-	- Backup data on Amazon S3(Optional)
+	- Backup data on Amazon S3 (Optional)
 	- Allows custom dump options
+	- Restore the whole database on the fly (Runs Once)
 
 # Currently Working On:
 
 	1. Add a Code Generation File   
 	2. Validate user provided settings (DB Login and Amazon S3 Keys)   
-	3. Create a class for the restoring process  of a previouse backed up DB   
-	4. Validating user added dump options  (within the 'addDumpOption' Method)   
-	5. Creating the automatic scheduling of the backup process (CronJobs creator)
+	3. Validating user added dump options  (within the 'addDumpOption' Method)   
+	4. Creating the automatic scheduling of the backup process (CronJobs Creator)
 
 Code Examples
 =============
@@ -34,7 +34,7 @@ Code Examples
 ?>
 ```
 
-#### Extended Usage (All Options, commented code)
+#### Extended Backup Usage (All Options, commented code)
 ```
 <?php
 	require_once('lib/BackupClass.php');
@@ -71,5 +71,19 @@ Code Examples
 	
 	//Start the actual backup process using the user specified settings and options
 	$dbBackupObj->executeBackup();
+?>
+```
+
+#### Basic Restore Usage
+```
+<?php
+	require_once('lib/BackupClass.php');
+	$dbConfig = array('host' => 'localhost',
+					  'login' => '{DBUsername}',
+					  'password' => '{DBPassword}',
+					  'database_name' => '{DBName}');
+	
+	$dbBackupObj = new DbBackup($dbConfig);
+	$dbBackupObj->executeRestore();
 ?>
 ```
