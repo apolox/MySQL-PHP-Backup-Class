@@ -21,7 +21,7 @@ Code Examples
 =============
 
 #### Basic Backup Usage
-```
+```php
 <?php
 	require_once('lib/BackupClass.php');
 	$dbConfig = array('host' => 'localhost',
@@ -35,7 +35,7 @@ Code Examples
 ```
 
 #### Extended Backup Usage (All Options, commented code)
-```
+```php
 <?php
 	require_once('lib/BackupClass.php');
 	
@@ -75,7 +75,7 @@ Code Examples
 ```
 
 #### Basic Restore Usage
-```
+```php
 <?php
 	require_once('lib/BackupClass.php');
 	$dbConfig = array('host' => 'localhost',
