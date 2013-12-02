@@ -16,6 +16,7 @@ This project provides a useful tool (PHP Class) to backup any MySQL database aut
 	2. Validate user provided settings (DB Login and Amazon S3 Keys)   
 	3. Validating user added dump options  (within the 'addDumpOption' Method)   
 	4. Creating the automatic scheduling of the backup process (CronJobs Creator)
+	5. Read Backup from Amazon S3 Storage if the local copy isn't available (in restore)
 
 Code Examples
 =============
