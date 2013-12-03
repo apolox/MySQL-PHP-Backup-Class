@@ -3,7 +3,7 @@
 * MySQL database backup class
 *
 * @author Ayman R. Bedair <http://www.AymanRB.com>
-* @version 0.1.1-beta
+* @version 0.1.2-beta
 * @access public
 *
 */
@@ -74,7 +74,7 @@ class DbBackup {
 	* @access private
 	* @see addDumpOption();executeBackup();
 	*/
-	private $dumpOptions = "--opt --skip-comments";
+	private $dumpOptions = "--opt --add-locks --skip-comments";
 	
 	/**
 	* Constructor of the class
@@ -154,11 +154,12 @@ class DbBackup {
 			
 			//Just to make sure the user provided all S3 Connection fields
 			if(!isset($this->s3Config['accessKey']) || !isset($this->s3Config['secretKey'])  || !isset($this->s3Config['bucketName'])){
+					
 				throw new Exception("<h3>Missing one or more Amazon S3 configuration Array keys<h3>
-				<br>Please validate you array has the following keys: <br>
-					1- accessKey<br>
-					2- secretKey<br>
-					3- bucketName");
+										<br>Please validate you array has the following keys: <br>
+											1- accessKey<br>
+											2- secretKey<br>
+											3- bucketName");
 			}
 			
 			$this->transferToS3 = true;
@@ -346,6 +347,7 @@ class DbBackup {
 		 		reset($dir_contents);
 		}
 	}
+	
 	/** 
 	* Generates a New Folder for the current Backup / Restor Execution Session
 	*
